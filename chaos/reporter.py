@@ -9,17 +9,6 @@ class RepoterTypes(object):
     LOCAL_FILE = "local"
     EMAIL = "email"
 
-class ReporterFactory(object):
-    types = {
-            RepoterTypes.DUMMY: DummyReporter,
-            RepoterTypes.LOCAL_FILE: LocalFileReporter,
-            RepoterTypes.EMAIL: EmailReporter
-            }
-
-    @classmethod
-    def new_reporter(cls, reporter_type):
-        return cls.types[reporter_type]()
-
 class Reporter(object):
 
     def __init__(self):
@@ -46,3 +35,14 @@ class EmailReporter(Reporter):
 
     def reporter(self, status):
         raise NotImplementedError("FIXME not implement it yet")
+
+class ReporterFactory(object):
+    types = {
+            RepoterTypes.DUMMY: DummyReporter,
+            RepoterTypes.LOCAL_FILE: LocalFileReporter,
+            RepoterTypes.EMAIL: EmailReporter
+            }
+
+    @classmethod
+    def new_reporter(cls, reporter_type):
+        return cls.types[reporter_type]()
