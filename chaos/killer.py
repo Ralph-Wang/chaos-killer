@@ -29,8 +29,8 @@ class Killer(object):
         self._service = service
 
     def random_kill(self):
-        # 从存活的 tikv 中挑先一个杀掉
-        logging.info("pick a poor node from %s", [tikv["address"] for tikv in self._service.active_tikvs])
+        # 从存活的 tikv 中挑一个杀掉
+        logging.info("pick a node from %s", [tikv["address"] for tikv in self._service.active_tikvs])
         poor_man = random.choice(self._service.active_tikvs)
 
         logging.info("try to kill the node %s", poor_man["address"])
