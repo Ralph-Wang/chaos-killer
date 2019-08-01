@@ -32,7 +32,7 @@ class Killer(object):
 
         logging.info("try to kill the node %s", poor_man["address"])
         self.kill(poor_man)
-        monitor = Monitor(self._service, poor_man, ReporterFactory.new_reporter(RepoterTypes.DUMMY)) # FIXME reporter configurable
+        monitor = Monitor(self._service, poor_man, ReporterFactory.new_reporter(RepoterTypes.LOCAL_FILE)) # FIXME make reporter configurable
         self._service.register(monitor)
 
     def kill(self, node):
