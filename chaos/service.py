@@ -16,7 +16,7 @@ from .killer import *
 
 PD_TREND_API = "http://{host}:{port}/pd/api/v1/trend"
 
-# FIXME the intervals can be configurable
+# FIXME 可配置化
 FETCH_INTERVAL = 100 # ms
 KILL_INTERVAL = 500 # ms
 
@@ -40,7 +40,7 @@ def fetch_data(service):
         timeunit.milliseconds.sleep(FETCH_INTERVAL)
 
 def kill_node(service, killer_type):
-    # 杀手线程主逻辑: 1 / 10 概率去杀掉一个节点, FIXME 概率可配置化
+    # 杀手线程主逻辑: 每次循环 1 / 10 概率去杀掉一个节点, FIXME 概率可配置化
     while True:
         if random.randint(0, 10) == 10 and service.tikv_can_be_killed:
             logging.info("oops, somebody will be unlucky and to be killed")
@@ -53,7 +53,7 @@ def kill_node(service, killer_type):
 
 
 
-# 杀手服务主体: 缓存一些从 PD 获取到的信息, 并且作为一个 Observable, 更新数据时会通知 Monitor
+# 杀手服务主体: 缓存从 PD 获取到的信息, 并且作为一个 Observable 接收注册 Monitor
 class TiDBKillerService(object):
     def __init__(self):
         self._monitors = []
@@ -61,7 +61,7 @@ class TiDBKillerService(object):
         self._active_tikvs = []
 
 
-        # 获取数据的线程
+        # 获取数据线程
         self._data_thread = threading.Thread(target=fetch_data, args=(self,))
         self._data_thread.setName("data-thread")
 
@@ -72,7 +72,7 @@ class TiDBKillerService(object):
 
     @property
     def tikv_can_be_killed(self):
-        # for easy case, here let the kill be not conccurent
+        # FIXME 这里为了简单点, 在有调度记录的时候不杀任何 tikv
         return len(self._monitors) == 0 and not self.exist_any_history and self.have_enough_active_tikvs
 
     @property
@@ -116,6 +116,4 @@ class TiDBKillerService(object):
     def serve(self):
         self.start()
         self.join()
-
-
 
