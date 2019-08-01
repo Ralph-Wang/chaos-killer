@@ -4,6 +4,8 @@
 import logging
 import time
 
+# 根据实际需要, 可能有多种不同的报告方式, 本地文件, Email 甚至是集成某些已有系统
+# 用工厂管理不同的报告类型
 
 class RepoterTypes(object):
     DUMMY = "dummy"

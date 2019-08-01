@@ -14,6 +14,8 @@ import subprocess
 from .reporter import *
 
 
+# 针对不同的环境杀服务的方式有区别, 用工厂来管理不同的杀手
+
 class KillerTypes(object):
     COMPOSE = "docker-compose"
     ANSIBLE= "ansible"
@@ -27,12 +29,15 @@ class Killer(object):
         self._service = service
 
     def random_kill(self):
+        # 从存活的 tikv 中挑先一个杀掉
         logging.info("pick a poor node from %s", [tikv["address"] for tikv in self._service.active_tikvs])
         poor_man = random.choice(self._service.active_tikvs)
 
         logging.info("try to kill the node %s", poor_man["address"])
         self.kill(poor_man)
-        monitor = Monitor(self._service, poor_man, ReporterFactory.new_reporter(RepoterTypes.LOCAL_FILE)) # FIXME make reporter configurable
+
+        # 杀掉 tikv 后, 创建一个专用的 Monitor 以监控状态变化
+        monitor = Monitor(self._service, poor_man, ReporterFactory.new_reporter(RepoterTypes.LOCAL_FILE)) # FIXME 可配置化
         self._service.register(monitor)
 
     def kill(self, node):
@@ -81,8 +86,10 @@ class KillerFactory(object):
     def new_killer(cls, killer_type, service):
         return cls.types[killer_type](service)
 
+
 class Monitor(object):
 
+    # FIXME 其实可以支持 Monitor 和 Reporter 一对多关系
     def __init__(self, service, killed_node, reporter):
         self._service = service
         self._reporter = reporter
@@ -105,7 +112,6 @@ class Monitor(object):
 
         logging.info("already migrated regions count - %s", migrated_region_count)
         if self._origin_region_count == migrated_region_count:
-            # the elapsed metric may not be so accurate as the INTERVAL exists.
             self._monitor_status["migrate_elapsed_secs"] = time.time() - self._start_in_secs
             self._monitor_status["total_migrated_regions"] = migrated_region_count
             self._monitor_status["final_status"] = data

@@ -14,39 +14,6 @@ import subprocess
 from .killer import *
 
 
-# hot fix for the issue of execute shell with pipeline in Python < 3.2
-def default_sigpipe():
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-
-
-def execute_shell(cmd, cwd=None):
-    logging.debug('Running command ' + ' '.join(cmd))
-    result = {
-            "code": -1,
-            "stdout" : "",
-            "stderr" : ""
-            }
-
-    try:
-        p = subprocess.Popen(cmd,
-                   stdout=subprocess.PIPE,
-                   stderr=subprocess.PIPE,
-                   preexec_fn=default_sigpipe,
-                   cwd=cwd)
-        stdout, stderr = p.communicate()
-
-        result['code'] = p.returncode
-        result['stdout'] = stdout or ''
-        result['stderr'] = stderr or ''
-    except:
-        result['code'] = -1
-        result['stderr'] = 'Shell execution error'
-
-    return result
-
-
-
-
 PD_TREND_API = "http://{host}:{port}/pd/api/v1/trend"
 
 # FIXME the intervals can be configurable
@@ -54,10 +21,11 @@ FETCH_INTERVAL = 100 # ms
 KILL_INTERVAL = 500 # ms
 
 def fetch_data(service):
+    # 同步 pd trend 信息线程主逻辑, 每次更新数据都会通知存在的 Monitor
     while True:
         logging.debug("fetching data from pd rest api")
 
-        # FIXME address can be configurable
+        # FIXME 地址可配置化
         resp = requests.get(PD_TREND_API.format(host="127.0.0.1", port="8010"))
         data = resp.json()
 
@@ -66,12 +34,13 @@ def fetch_data(service):
         service.active_tikvs = active_tikvs
         service.exist_any_history = len(data["history"]["entries"]) != 0
 
-        # notify all observer
+        # 通知 Monitor
         service.notify(data)
 
         timeunit.milliseconds.sleep(FETCH_INTERVAL)
 
 def kill_node(service, killer_type):
+    # 杀手线程主逻辑: 1 / 10 概率去杀掉一个节点, FIXME 概率可配置化
     while True:
         if random.randint(0, 10) == 10 and service.tikv_can_be_killed:
             logging.info("oops, somebody will be unlucky and to be killed")
@@ -84,6 +53,7 @@ def kill_node(service, killer_type):
 
 
 
+# 杀手服务主体: 缓存一些从 PD 获取到的信息, 并且作为一个 Observable, 更新数据时会通知 Monitor
 class TiDBKillerService(object):
     def __init__(self):
         self._monitors = []
@@ -91,9 +61,11 @@ class TiDBKillerService(object):
         self._active_tikvs = []
 
 
+        # 获取数据的线程
         self._data_thread = threading.Thread(target=fetch_data, args=(self,))
         self._data_thread.setName("data-thread")
 
+        # 杀手线程
         # FIXME killer type can be configurable
         self._killer_thread = threading.Thread(target=kill_node, args=(self, KillerTypes.COMPOSE))
         self._killer_thread.setName("killer-thread")
