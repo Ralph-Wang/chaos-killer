@@ -5,8 +5,6 @@ import logging
 import time
 
 
-# FIXME if we need a same format in different reporter, we can extract a common formatter as well.
-
 class RepoterTypes(object):
     DUMMY = "dummy"
     LOCAL_FILE = "local"

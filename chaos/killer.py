@@ -96,7 +96,7 @@ class Monitor(object):
         self._killed_node_id = killed_node["id"]
 
     def update(self, data):
-        logging.info("update data in monitor %s, %s", self, data)
+        logging.debug("update data in monitor %s, %s", self, data)
 
         migrated_region_count = 0
         for entry in data["history"]["entries"]:
