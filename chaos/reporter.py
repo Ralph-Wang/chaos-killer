@@ -34,10 +34,10 @@ class LocalFileReporter(Reporter):
             left_active_tikvs = len(filter(lambda tikv: tikv["state_name"] == "Up", status["final_status"]["stores"]))
 
             report_file_obj.write("""
-                    migrate_elasped: {0} seconds
-                    total_migrated_regions: {1}
-                    left_active_tikvs: {2}
-                    """.format(status["migrate_elapsed_secs"],
+migrate_elasped: {0} seconds
+total_migrated_regions: {1}
+left_active_tikvs: {2}
+""".format(status["migrate_elapsed_secs"],
                         status["total_migrated_regions"],
                         left_active_tikvs
                         ))
