@@ -30,7 +30,7 @@ class DummyReporter(Reporter):
 class LocalFileReporter(Reporter):
 
     def report(self, status):
-        report_file = "chaos.report.{0}.txt".forma(time.strftime("%Y%m%d.%H%M%S"))
+        report_file = "chaos.report.{0}.txt".format(time.strftime("%Y%m%d.%H%M%S"))
         logging.info("trying to report to a file - %s", report_file)
         with open(report_file) as report_file_obj:
             left_active_tikvs = len(filter(lambda tikv: tikv["state_name"] == "Up", status["final_status"]["stores"]))

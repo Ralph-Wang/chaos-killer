@@ -101,7 +101,11 @@ class TiDBKillerService(object):
     @property
     def tikv_can_be_killed(self):
         # for easy case, here let the kill be not conccurent
-        return len(self._monitors) == 0 and not self.exist_any_history and len(self.active_tikvs) >= 4
+        return len(self._monitors) == 0 and not self.exist_any_history and self.have_enough_active_tikvs
+
+    @property
+    def have_enough_active_tikvs(self):
+        return len(self.active_tikvs) >= 4
 
     @property
     def exist_any_history(self):
